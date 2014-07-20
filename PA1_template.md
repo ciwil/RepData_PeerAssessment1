@@ -2,7 +2,8 @@
 
 
 ## Loading and preprocessing the data
-```{r , echo=TRUE}
+
+```r
 fname <- unzip("activity.zip")
 activity <- read.csv(fname, colClasses = c("integer", "Date", "integer"))
 ```
@@ -11,47 +12,56 @@ activity <- read.csv(fname, colClasses = c("integer", "Date", "integer"))
 
 a. Make a histogram of the total number of steps taken each day
 
-```{r histogramperday, echo=TRUE}
+
+```r
 steps.date <- aggregate(steps ~ date, data=activity, FUN=sum)
 barplot(steps.date$steps, names.arg=steps.date$date, xlab="date", ylab="steps")
 ```
 
+![plot of chunk histogramperday](figure/histogramperday.png) 
+
 b. Calculate and report the **mean** and **median** total number of
    steps taken per day
 
-```{r , echo=TRUE}
+
+```r
 meanVal <- mean(steps.date$steps)
 medianVal <- median(steps.date$steps)
 ```
-Mean value equal `r meanVal` and median equal `r medianVal`.
+Mean value equal 1.0766 &times; 10<sup>4</sup> and median equal 10765.
 
 ## What is the average daily activity pattern?
 
 a. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r timeseries, echo=TRUE}
+
+```r
 library("plyr")
 avgsteps<-ddply(activity, ~interval, summarize, avg=mean(steps, na.rm=TRUE))
 plot(x<-avgsteps$interval, y<-avgsteps$avg, type = "l", lwd=3, col="red", main="Average daily activity pattern", xlab="Interval", ylab="Average number of steps")
 ```
 
+![plot of chunk timeseries](figure/timeseries.png) 
+
 b. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r ,echo=TRUE}
+
+```r
 intervalMax <- avgsteps$interval[which.max(avgsteps$avg)]
 ```
 
-Interval `r intervalMax` contains the maximum number of steps.
+Interval 835 contains the maximum number of steps.
 
 ## Imputing missing values
 
 a. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
 
-```{r , echo=TRUE}
+
+```r
 missingRow <- sum(is.na(activity))
 ```
 
-The total number of missing values in the dataset is `r missingRow`.
+The total number of missing values in the dataset is 2304.
 
 b. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
@@ -59,14 +69,16 @@ Missing values will be imputed based on the mean number of steps for a given int
 
 Generate the mean number of steps per interval (as above):
 
-```{r stepsPerInterval2, echo=TRUE}
+
+```r
 library(plyr)
 stepsPerInterval <- ddply(activity,.(interval), summarize, steps = mean(steps, na.rm=T))
 ```
 
 2. Using a loop, create a vector of imputed values. If an NA is found in steps, replace the value with the mean number of steps for that interval of the day.
 
-```{r stepsImpute_Loop, echo=TRUE, cache=TRUE}
+
+```r
 #create a list called stepsImpute, fill with NAs
 stepsImpute <- vector("list",nrow(activity))
 
@@ -82,43 +94,71 @@ for (row in seq(1:nrow(activity))) {
 ```
 
 ### Add the imputed data back into the original dataset
-```{r add stepsImputed, echo=TRUE}
+
+```r
 activity$stepsImputed <- unlist(stepsImpute)
 ```
 
 ### Histogram, mean and median of the imputed data
 Create a new dataframe with total steps per day using the imputed values:
 
-```{r stepsPerDay imputed, echo=TRUE}
+
+```r
 stepsPerDay <- ddply(activity,.(date), summarize, steps = sum(steps, na.rm=T))
 stepsPerDayImputed <- ddply(activity,.(date), summarize, steps = sum(stepsImputed, na.rm=T))
 ```
 
 #### Histogram
-```{r Histogram_steps_imputed,echo=TRUE}
+
+```r
 hist(stepsPerDay$steps, breaks=20, main="Histogram of steps per day",
      xlab = "steps", ylab = "number of days")
+```
+
+![plot of chunk Histogram_steps_imputed](figure/Histogram_steps_imputed1.png) 
+
+```r
 hist(stepsPerDayImputed$steps, breaks=20, main="Histogram of imputed steps per day", xlab = "steps", ylab = "number of days")
 ```
 
+![plot of chunk Histogram_steps_imputed](figure/Histogram_steps_imputed2.png) 
+
 #### Mean number of imputed steps per day:
 
-```{r mean steps/day imputed,echo=TRUE}
+
+```r
 mean(stepsPerDayImputed$steps, na.rm=T)
 ```
 
+```
+## [1] 10766
+```
+
 #### Median imputed steps per day:
-```{r median steps/day imputed,echo=TRUE}
+
+```r
 quantile(stepsPerDayImputed$steps, 0.5, na.rm=T)
+```
+
+```
+##   50% 
+## 10766
 ```
 
 #### Comparing to the non-imputed data
 As can be seen below, imputing missing steps by the mean number of steps per interval increases both the mean and median.
 
-```{r compare original and imputed,echo=TRUE}
+
+```r
 comparison <- data.frame(mean=c(mean(stepsPerDay$steps, na.rm=T),mean(stepsPerDayImputed$steps, na.rm=T)),median=c(quantile(stepsPerDay$steps, 0.5, na.rm=T),quantile(stepsPerDayImputed$steps, 0.5, na.rm=T)),row.names=c("original","imputed"))
 
 comparison
+```
+
+```
+##           mean median
+## original  9354  10395
+## imputed  10766  10766
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -127,23 +167,40 @@ comparison
 * Second, code whether it is the weekend or weekday in a variable called 'weekday'
 * Note: 'date' is converted from factor to POSIX using the lubridate package
 
-```{r add days of week, echo=TRUE}
+
+```r
 library(lubridate)
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+## 
+## The following object is masked from 'package:plyr':
+## 
+##     here
+```
+
+```r
 Sys.setenv(LANG = "en")
 activity$day <- weekdays(ymd(activity$date))
 activity$weekday <- as.factor(ifelse(activity$day %in% c("Saturday","Sunday"),"Weekend","Weekday"))
 ```
 
 Now, create a new dataset coding the average steps per interval for weekends and weekdays
-```{r stepsPerInterval Weekdays/Weekends,echo=TRUE}
+
+```r
 stepsPerIntervalSplit <- ddply(activity, .(weekday,interval), summarize, steps = mean(stepsImputed))
 ```
 
 #### Time series plot weekends vs. weekdays
 Uses the ggplot2 package:
-```{r Timeseries_weekday_vs_weekend, echo=TRUE}
+
+```r
 library(ggplot2)
 timeseriesplot <- ggplot(stepsPerIntervalSplit,aes(interval,steps)) + geom_line(size=1) + facet_wrap(~weekday,ncol=1) + ylab("Mean number of steps") + xlab("5 minute interval number")
 
 timeseriesplot
 ```
+
+![plot of chunk Timeseries_weekday_vs_weekend](figure/Timeseries_weekday_vs_weekend.png) 
