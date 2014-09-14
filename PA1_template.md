@@ -14,8 +14,9 @@ a. Make a histogram of the total number of steps taken each day
 
 
 ```r
-steps.date <- aggregate(steps ~ date, data=activity, FUN=sum)
-barplot(steps.date$steps, names.arg=steps.date$date, xlab="date", ylab="steps")
+library(plyr)
+stepsPerDay <- ddply(activity,.(date), summarize, steps = sum(steps, na.rm=T))
+barplot(stepsPerDay$steps, names.arg=stepsPerDay$date, xlab="date", ylab="steps")
 ```
 
 ![plot of chunk histogramperday](figure/histogramperday.png) 
@@ -25,10 +26,10 @@ b. Calculate and report the **mean** and **median** total number of
 
 
 ```r
-meanVal <- mean(steps.date$steps)
-medianVal <- median(steps.date$steps)
+meanVal <- mean(stepsPerDay$steps)
+medianVal <- median(stepsPerDay$steps)
 ```
-Mean value equal 1.0766 &times; 10<sup>4</sup> and median equal 10765.
+Mean value equal 9354.2295 and median equal 10395.
 
 ## What is the average daily activity pattern?
 
@@ -36,7 +37,6 @@ a. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) a
 
 
 ```r
-library("plyr")
 avgsteps<-ddply(activity, ~interval, summarize, avg=mean(steps, na.rm=TRUE))
 plot(x<-avgsteps$interval, y<-avgsteps$avg, type = "l", lwd=3, col="red", main="Average daily activity pattern", xlab="Interval", ylab="Average number of steps")
 ```
@@ -71,7 +71,6 @@ Generate the mean number of steps per interval (as above):
 
 
 ```r
-library(plyr)
 stepsPerInterval <- ddply(activity,.(interval), summarize, steps = mean(steps, na.rm=T))
 ```
 
@@ -104,7 +103,6 @@ Create a new dataframe with total steps per day using the imputed values:
 
 
 ```r
-stepsPerDay <- ddply(activity,.(date), summarize, steps = sum(steps, na.rm=T))
 stepsPerDayImputed <- ddply(activity,.(date), summarize, steps = sum(stepsImputed, na.rm=T))
 ```
 
@@ -173,6 +171,10 @@ library(lubridate)
 ```
 
 ```
+## Warning: package 'lubridate' was built under R version 3.1.1
+```
+
+```
 ## 
 ## Attaching package: 'lubridate'
 ## 
@@ -198,6 +200,13 @@ Uses the ggplot2 package:
 
 ```r
 library(ggplot2)
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 3.1.1
+```
+
+```r
 timeseriesplot <- ggplot(stepsPerIntervalSplit,aes(interval,steps)) + geom_line(size=1) + facet_wrap(~weekday,ncol=1) + ylab("Mean number of steps") + xlab("5 minute interval number")
 
 timeseriesplot

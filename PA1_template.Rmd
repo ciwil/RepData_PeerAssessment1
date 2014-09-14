@@ -12,16 +12,18 @@ activity <- read.csv(fname, colClasses = c("integer", "Date", "integer"))
 a. Make a histogram of the total number of steps taken each day
 
 ```{r histogramperday, echo=TRUE}
-steps.date <- aggregate(steps ~ date, data=activity, FUN=sum)
-barplot(steps.date$steps, names.arg=steps.date$date, xlab="date", ylab="steps")
+library(plyr)
+stepsPerDay <- ddply(activity,.(date), summarize, steps = sum(steps, na.rm=T))
+barplot(stepsPerDay$steps, names.arg=stepsPerDay$date, xlab="date", ylab="steps")
+
 ```
 
 b. Calculate and report the **mean** and **median** total number of
    steps taken per day
 
 ```{r , echo=TRUE}
-meanVal <- mean(steps.date$steps)
-medianVal <- median(steps.date$steps)
+meanVal <- mean(stepsPerDay$steps)
+medianVal <- median(stepsPerDay$steps)
 ```
 Mean value equal `r meanVal` and median equal `r medianVal`.
 
@@ -30,7 +32,6 @@ Mean value equal `r meanVal` and median equal `r medianVal`.
 a. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 ```{r timeseries, echo=TRUE}
-library("plyr")
 avgsteps<-ddply(activity, ~interval, summarize, avg=mean(steps, na.rm=TRUE))
 plot(x<-avgsteps$interval, y<-avgsteps$avg, type = "l", lwd=3, col="red", main="Average daily activity pattern", xlab="Interval", ylab="Average number of steps")
 ```
@@ -60,7 +61,6 @@ Missing values will be imputed based on the mean number of steps for a given int
 Generate the mean number of steps per interval (as above):
 
 ```{r stepsPerInterval2, echo=TRUE}
-library(plyr)
 stepsPerInterval <- ddply(activity,.(interval), summarize, steps = mean(steps, na.rm=T))
 ```
 
@@ -90,7 +90,6 @@ activity$stepsImputed <- unlist(stepsImpute)
 Create a new dataframe with total steps per day using the imputed values:
 
 ```{r stepsPerDay imputed, echo=TRUE}
-stepsPerDay <- ddply(activity,.(date), summarize, steps = sum(steps, na.rm=T))
 stepsPerDayImputed <- ddply(activity,.(date), summarize, steps = sum(stepsImputed, na.rm=T))
 ```
 
